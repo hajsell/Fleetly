@@ -7,28 +7,28 @@ datasource db {
 }
 
 model Organization {
-  id                 String    @id // ID z Clerk
+  id                 String   @id @default(uuid())
   name               String
-  stripeCustomerId   String?   @map("stripe_customer_id")
-  subscriptionStatus String    @default("inactive") @map("subscription_status")
-  maxDrivers         Int       @default(3) @map("max_drivers")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  
-  users              User[]
-  vehicles           Vehicle[]
-  rides              Ride[]
+  stripeCustomerId   String?  @map("stripe_customer_id")
+  subscriptionStatus String   @default("inactive") @map("subscription_status")
+  maxDrivers         Int      @default(3) @map("max_drivers")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  users    User[]
+  vehicles Vehicle[]
+  rides    Ride[]
 
   @@map("organizations")
 }
 
 model User {
-  id             String       @id // ID z Clerk
-  organizationId String       @map("organization_id")
-  email          String       @unique
-  firstName      String?      @map("first_name")
-  lastName       String?      @map("last_name")
-  role           String       // 'manager' lub 'driver'
-  createdAt      DateTime     @default(now()) @map("created_at")
+  id             String   @id // ID z Clerk
+  organizationId String   @map("organization_id")
+  email          String   @unique
+  firstName      String?  @map("first_name")
+  lastName       String?  @map("last_name")
+  role           String // 'manager' lub 'driver'
+  createdAt      DateTime @default(now()) @map("created_at")
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   requestedRides Ride[]       @relation("RequestedRides")
@@ -38,45 +38,45 @@ model User {
 }
 
 model Vehicle {
-  id             Int          @id @default(autoincrement())
-  organizationId String       @map("organization_id")
+  id             Int    @id @default(autoincrement())
+  organizationId String @map("organization_id")
   make           String
   model          String
-  licensePlate   String       @unique @map("license_plate")
-  status         String       @default("available")
+  licensePlate   String @unique @map("license_plate")
+  status         String @default("available")
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  rides          Ride[]
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rides        Ride[]
 
   @@map("vehicles")
 }
 
 model Ride {
-  id                Int          @id @default(autoincrement())
-  organizationId    String       @map("organization_id")
-  requestedById     String       @map("requested_by_id")
-  driverId          String?      @map("driver_id")
-  vehicleId         Int?         @map("vehicle_id")
-  
-  pickupLatitude    Float        @map("pickup_latitude")
-  pickupLongitude   Float        @map("pickup_longitude")
-  dropoffLatitude   Float        @map("dropoff_latitude")
-  dropoffLongitude  Float        @map("dropoff_longitude")
-  
-  pickupAddress     String       @map("pickup_address")
-  dropoffAddress    String       @map("dropoff_address")
-  
-  status            String       @default("requested")
-  estimatedPrice    Float?       @map("estimated_price")
-  distanceKm        Float?       @map("distance_km")
-  
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
+  id             Int     @id @default(autoincrement())
+  organizationId String  @map("organization_id")
+  requestedById  String  @map("requested_by_id")
+  driverId       String? @map("driver_id")
+  vehicleId      Int?    @map("vehicle_id")
 
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requestedBy       User         @relation("RequestedRides", fields: [requestedById], references: [id])
-  driver            User?        @relation("DrivenRides", fields: [driverId], references: [id])
-  vehicle           Vehicle?     @relation(fields: [vehicleId], references: [id])
+  pickupLatitude   Float @map("pickup_latitude")
+  pickupLongitude  Float @map("pickup_longitude")
+  dropoffLatitude  Float @map("dropoff_latitude")
+  dropoffLongitude Float @map("dropoff_longitude")
+
+  pickupAddress  String @map("pickup_address")
+  dropoffAddress String @map("dropoff_address")
+
+  status         String @default("requested")
+  estimatedPrice Float? @map("estimated_price")
+  distanceKm     Float? @map("distance_km")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy  User         @relation("RequestedRides", fields: [requestedById], references: [id])
+  driver       User?        @relation("DrivenRides", fields: [driverId], references: [id])
+  vehicle      Vehicle?     @relation(fields: [vehicleId], references: [id])
 
   @@map("rides")
 }
