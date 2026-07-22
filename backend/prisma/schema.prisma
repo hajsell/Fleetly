@@ -6,6 +6,25 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  MANAGER
+  DRIVER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+enum RideStatus {
+  REQUESTED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model Organization {
   id                 String   @id @default(uuid())
   name               String
@@ -22,12 +41,13 @@ model Organization {
 }
 
 model User {
-  id             String   @id // ID z Clerk
+  id             String   @id @default(uuid())
   organizationId String   @map("organization_id")
   email          String   @unique
+  password       String?
   firstName      String?  @map("first_name")
   lastName       String?  @map("last_name")
-  role           String // 'manager' lub 'driver'
+  role           UserRole @default(DRIVER)
   createdAt      DateTime @default(now()) @map("created_at")
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -38,12 +58,12 @@ model User {
 }
 
 model Vehicle {
-  id             Int    @id @default(autoincrement())
-  organizationId String @map("organization_id")
+  id             Int           @id @default(autoincrement())
+  organizationId String        @map("organization_id")
   make           String
   model          String
-  licensePlate   String @unique @map("license_plate")
-  status         String @default("available")
+  licensePlate   String        @unique @map("license_plate")
+  status         VehicleStatus @default(AVAILABLE)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   rides        Ride[]
@@ -66,9 +86,9 @@ model Ride {
   pickupAddress  String @map("pickup_address")
   dropoffAddress String @map("dropoff_address")
 
-  status         String @default("requested")
-  estimatedPrice Float? @map("estimated_price")
-  distanceKm     Float? @map("distance_km")
+  status         RideStatus @default(REQUESTED)
+  estimatedPrice Float?     @map("estimated_price")
+  distanceKm     Float?     @map("distance_km")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

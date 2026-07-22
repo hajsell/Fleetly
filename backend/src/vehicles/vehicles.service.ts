@@ -6,9 +6,7 @@ import {
 import { Prisma, Vehicle } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
-
-const VEHICLE_STATUSES = ['available', 'in_use'] as const;
-type VehicleStatus = (typeof VEHICLE_STATUSES)[number];
+import { VehicleStatus } from '@prisma/client';
 
 @Injectable()
 export class VehiclesService {
@@ -42,18 +40,17 @@ export class VehiclesService {
     });
   }
 
-  async updateStatus(vehicleId: number, status: string): Promise<Vehicle> {
-    if (!this.isVehicleStatus(status)) {
-      throw new BadRequestException(
-        `Nieprawidłowy status pojazdu. Dozwolone wartości: ${VEHICLE_STATUSES.join(', ')}`,
-      );
-    }
-
+  async updateStatus(
+    vehicleId: number,
+    status: VehicleStatus,
+  ): Promise<Vehicle> {
     try {
-      return await this.prisma.vehicle.update({
+      const updatedVehicle: Vehicle = await this.prisma.vehicle.update({
         where: { id: vehicleId },
         data: { status },
       });
+
+      return updatedVehicle;
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -64,9 +61,5 @@ export class VehiclesService {
 
       throw error;
     }
-  }
-
-  private isVehicleStatus(status: string): status is VehicleStatus {
-    return VEHICLE_STATUSES.includes(status as VehicleStatus);
   }
 }

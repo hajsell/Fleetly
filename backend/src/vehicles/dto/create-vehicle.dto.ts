@@ -1,10 +1,11 @@
 import {
-  IsIn,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   Length,
 } from 'class-validator';
+import { VehicleStatus } from '@prisma/client';
 
 export class CreateVehicleDto {
   @IsString()
@@ -25,8 +26,8 @@ export class CreateVehicleDto {
   licensePlate: string;
 
   @IsOptional()
-  @IsIn(['avalible', 'in_use'], {
-    message: 'Status musi być: avalible lub in_use',
+  @IsEnum(VehicleStatus, {
+    message: 'Status musi być jedną z wartości: AVAILABLE, IN_USE, MAINTENANCE',
   })
-  status: 'available' | 'in_use';
+  status: VehicleStatus;
 }
