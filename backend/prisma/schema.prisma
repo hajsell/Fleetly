@@ -6,19 +6,24 @@ datasource db {
   provider = "postgresql"
 }
 
-enum UserRole {
-  MANAGER
-  DRIVER
+enum OrganizationType {
+  CUSTOMER
+  PROVIDER
+}
+
+enum MembershipRole {
+  OWNER
+  MEMBER
 }
 
 enum VehicleStatus {
-  AVAILABLE
-  IN_USE
+  ACTIVE
   MAINTENANCE
+  ARCHIVED
 }
 
-enum RideStatus {
-  REQUESTED
+enum TransportOrderStatus {
+  PENDING
   ACCEPTED
   IN_PROGRESS
   COMPLETED
@@ -26,35 +31,49 @@ enum RideStatus {
 }
 
 model Organization {
-  id                 String   @id @default(uuid())
-  name               String
-  stripeCustomerId   String?  @map("stripe_customer_id")
-  subscriptionStatus String   @default("inactive") @map("subscription_status")
-  maxDrivers         Int      @default(3) @map("max_drivers")
-  createdAt          DateTime @default(now()) @map("created_at")
+  id        String           @id @default(uuid())
+  name      String
+  type      OrganizationType
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
 
-  users    User[]
-  vehicles Vehicle[]
-  rides    Ride[]
+  memberships    OrganizationMembership[]
+  vehicles       Vehicle[]
+  customerOrders TransportOrder[]         @relation("CustomerOrders")
+  providerOrders TransportOrder[]         @relation("ProviderOrders")
 
+  @@index([type])
   @@map("organizations")
 }
 
 model User {
-  id             String   @id @default(uuid())
-  organizationId String   @map("organization_id")
-  email          String   @unique
-  password       String?
-  firstName      String?  @map("first_name")
-  lastName       String?  @map("last_name")
-  role           UserRole @default(DRIVER)
-  createdAt      DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requestedRides Ride[]       @relation("RequestedRides")
-  drivenRides    Ride[]       @relation("DrivenRides")
+  memberships   OrganizationMembership[]
+  createdOrders TransportOrder[]
 
   @@map("users")
+}
+
+model OrganizationMembership {
+  id             String         @id @default(uuid())
+  userId         String         @map("user_id")
+  organizationId String         @map("organization_id")
+  role           MembershipRole @default(MEMBER)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("organization_memberships")
 }
 
 model Vehicle {
@@ -62,41 +81,41 @@ model Vehicle {
   organizationId String        @map("organization_id")
   make           String
   model          String
-  licensePlate   String        @unique @map("license_plate")
-  status         VehicleStatus @default(AVAILABLE)
+  licensePlate   String        @map("license_plate")
+  seatCapacity   Int           @map("seat_capacity")
+  status         VehicleStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  rides        Ride[]
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orders       TransportOrder[]
 
+  @@unique([organizationId, licensePlate])
+  @@index([organizationId, status])
   @@map("vehicles")
 }
 
-model Ride {
-  id             Int     @id @default(autoincrement())
-  organizationId String  @map("organization_id")
-  requestedById  String  @map("requested_by_id")
-  driverId       String? @map("driver_id")
-  vehicleId      Int?    @map("vehicle_id")
+model TransportOrder {
+  id                     Int                  @id @default(autoincrement())
+  customerOrganizationId String               @map("customer_organization_id")
+  providerOrganizationId String?              @map("provider_organization_id")
+  createdById            String               @map("created_by_id")
+  vehicleId              Int?                 @map("vehicle_id")
+  pickupAddress          String               @map("pickup_address")
+  dropoffAddress         String               @map("dropoff_address")
+  scheduledAt            DateTime             @map("scheduled_at")
+  passengerCount         Int                  @map("passenger_count")
+  status                 TransportOrderStatus @default(PENDING)
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
 
-  pickupLatitude   Float @map("pickup_latitude")
-  pickupLongitude  Float @map("pickup_longitude")
-  dropoffLatitude  Float @map("dropoff_latitude")
-  dropoffLongitude Float @map("dropoff_longitude")
+  customerOrganization Organization  @relation("CustomerOrders", fields: [customerOrganizationId], references: [id], onDelete: Restrict)
+  providerOrganization Organization? @relation("ProviderOrders", fields: [providerOrganizationId], references: [id], onDelete: Restrict)
+  createdBy            User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  vehicle              Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
 
-  pickupAddress  String @map("pickup_address")
-  dropoffAddress String @map("dropoff_address")
-
-  status         RideStatus @default(REQUESTED)
-  estimatedPrice Float?     @map("estimated_price")
-  distanceKm     Float?     @map("distance_km")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requestedBy  User         @relation("RequestedRides", fields: [requestedById], references: [id])
-  driver       User?        @relation("DrivenRides", fields: [driverId], references: [id])
-  vehicle      Vehicle?     @relation(fields: [vehicleId], references: [id])
-
-  @@map("rides")
+  @@index([customerOrganizationId, status])
+  @@index([providerOrganizationId, status])
+  @@index([scheduledAt])
+  @@map("transport_orders")
 }
