@@ -4,10 +4,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { MembershipRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { JwtPayload } from './interfaces/auth-user.interface';
 
 @Injectable()
 export class AuthService {
@@ -17,8 +19,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    const email = dto.email.trim().toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (existingUser) {
@@ -30,87 +33,101 @@ export class AuthService {
     const result = await this.prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: {
-          name: dto.organizationName,
+          name: dto.organizationName.trim(),
+          type: dto.organizationType,
         },
       });
 
       const user = await tx.user.create({
         data: {
-          email: dto.email,
+          email,
           password: hashedPassword,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          role: 'MANAGER',
-          organizationId: organization.id,
+          firstName: dto.firstName.trim(),
+          lastName: dto.lastName.trim(),
         },
       });
 
-      return { organization, user };
+      const membership = await tx.organizationMembership.create({
+        data: {
+          userId: user.id,
+          organizationId: organization.id,
+          role: MembershipRole.OWNER,
+        },
+      });
+
+      return { organization, user, membership };
     });
 
-    const token = this.generateToken(
-      result.user.id,
-      result.user.email,
-      result.organization.id,
-      result.user.role,
-    );
+    const accessToken = this.generateToken({
+      sub: result.user.id,
+      membershipId: result.membership.id,
+      organizationId: result.organization.id,
+      role: result.membership.role,
+      organizationType: result.organization.type,
+    });
 
     return {
       message: 'Rejestracja zakończona sukcesem',
-      accessToken: token,
+      accessToken,
       user: {
         id: result.user.id,
         email: result.user.email,
         firstName: result.user.firstName,
         lastName: result.user.lastName,
-        role: result.user.role,
+        role: result.membership.role,
         organizationId: result.organization.id,
+        organizationType: result.organization.type,
       },
     };
   }
 
   async login(dto: LoginDto) {
+    const email = dto.email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
+      include: {
+        memberships: {
+          include: { organization: true },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+        },
+      },
     });
 
-    if (!user || !user.password) {
+    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Niepoprawne dane logowania.');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Niepoprawne dane logowania.');
+    const membership = user.memberships[0];
+    if (!membership) {
+      throw new UnauthorizedException(
+        'Użytkownik nie należy do żadnej organizacji.',
+      );
     }
 
-    const token = this.generateToken(
-      user.id,
-      user.email,
-      user.organizationId,
-      user.role,
-    );
+    const accessToken = this.generateToken({
+      sub: user.id,
+      membershipId: membership.id,
+      organizationId: membership.organizationId,
+      role: membership.role,
+      organizationType: membership.organization.type,
+    });
 
     return {
-      accessToken: token,
+      accessToken,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
-        organizationId: user.organizationId,
+        role: membership.role,
+        organizationId: membership.organizationId,
+        organizationType: membership.organization.type,
       },
     };
   }
 
-  private generateToken(
-    userId: string,
-    email: string,
-    organizationId: string,
-    role: string,
-  ): string {
-    const payload = { sub: userId, email, organizationId, role };
+  private generateToken(payload: JwtPayload): string {
     return this.jwtService.sign(payload);
   }
 }
