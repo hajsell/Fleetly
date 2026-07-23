@@ -1,73 +1,42 @@
 import {
-  BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Organization } from '@prisma/client';
+import { MembershipRole, Organization } from '@prisma/client';
+import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
-
-const SUBSCRIPTION_STATUSES = ['active', 'trialing', 'inactive'] as const;
-type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+import { UpdateOrganizationDto } from './dto/update-organization.dto';
 
 @Injectable()
 export class OrganizationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createOrganization(dto: CreateOrganizationDto): Promise<Organization> {
-    try {
-      return await this.prisma.organization.create({ data: dto });
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new BadRequestException(`Organizacja z tą nazwą już istnieje`);
-      }
-      throw error;
-    }
-  }
-
-  async findOne(id: string): Promise<Organization> {
+  async findMine(authUser: AuthUser): Promise<Organization> {
     const organization = await this.prisma.organization.findUnique({
-      where: { id },
+      where: { id: authUser.organizationId },
     });
 
     if (!organization) {
-      throw new NotFoundException(`Organizacja o id ${id} nie istnieje`);
+      throw new NotFoundException('Organizacja nie istnieje.');
     }
 
     return organization;
   }
 
-  async updateSubscriptionStatus(
-    id: string,
-    status: string,
+  async updateMine(
+    authUser: AuthUser,
+    dto: UpdateOrganizationDto,
   ): Promise<Organization> {
-    if (!this.isSubscriptionStatus(status)) {
-      throw new BadRequestException(
-        `Nieprawidłowy status subskrypcji. Dozwolone wartości: ${SUBSCRIPTION_STATUSES.join(',')}`,
+    if (authUser.role !== MembershipRole.OWNER) {
+      throw new ForbiddenException(
+        'Tylko właściciel może edytować organizację.',
       );
     }
 
-    try {
-      return await this.prisma.organization.update({
-        where: { id },
-        data: { subscriptionStatus: status },
-      });
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(`Organizacja o id ${id} nie istnieje`);
-      }
-
-      throw error;
-    }
-  }
-
-  private isSubscriptionStatus(status: string): status is SubscriptionStatus {
-    return SUBSCRIPTION_STATUSES.includes(status as SubscriptionStatus);
+    return this.prisma.organization.update({
+      where: { id: authUser.organizationId },
+      data: { name: dto.name.trim() },
+    });
   }
 }

@@ -1,65 +1,99 @@
 import {
-  BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Vehicle } from '@prisma/client';
+import {
+  MembershipRole,
+  OrganizationType,
+  Prisma,
+  Vehicle,
+} from '@prisma/client';
+import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
-import { VehicleStatus } from '@prisma/client';
+import { UpdateVehicleStatusDto } from './dto/update-vehicle-status.dto';
 
 @Injectable()
 export class VehiclesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createVehicle(dto: CreateVehicleDto): Promise<Vehicle> {
+  async create(authUser: AuthUser, dto: CreateVehicleDto): Promise<Vehicle> {
+    this.assertCanManageVehicles(authUser);
+
     try {
-      return await this.prisma.vehicle.create({ data: dto });
+      return await this.prisma.vehicle.create({
+        data: {
+          organizationId: authUser.organizationId,
+          make: dto.make.trim(),
+          model: dto.model.trim(),
+          licensePlate: this.normalizeLicensePlate(dto.licensePlate),
+          seatCapacity: dto.seatCapacity,
+        },
+      });
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new BadRequestException(
-          `Pojazd o numerze rejestracyjnym ${dto.licensePlate} już istnieje`,
+        throw new ConflictException(
+          'Pojazd o tym numerze rejestracyjnym już istnieje w organizacji.',
         );
       }
-
       throw error;
     }
   }
 
-  async findAllByOrganization(organizationId: string): Promise<Vehicle[]> {
-    if (!organizationId.trim()) {
-      throw new BadRequestException('Identyfikator organizacji jest wymagany');
+  findAll(authUser: AuthUser): Promise<Vehicle[]> {
+    if (authUser.organizationType !== OrganizationType.PROVIDER) {
+      throw new ForbiddenException(
+        'Pojazdy są dostępne tylko dla przewoźników.',
+      );
     }
 
     return this.prisma.vehicle.findMany({
-      where: { organizationId },
-      orderBy: { id: 'asc' },
+      where: { organizationId: authUser.organizationId },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async updateStatus(
+    authUser: AuthUser,
     vehicleId: number,
-    status: VehicleStatus,
+    dto: UpdateVehicleStatusDto,
   ): Promise<Vehicle> {
-    try {
-      const updatedVehicle: Vehicle = await this.prisma.vehicle.update({
-        where: { id: vehicleId },
-        data: { status },
-      });
+    this.assertCanManageVehicles(authUser);
 
-      return updatedVehicle;
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(`Nie znaleziono pojazdu o ID ${vehicleId}`);
-      }
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, organizationId: authUser.organizationId },
+    });
 
-      throw error;
+    if (!vehicle) {
+      throw new NotFoundException('Pojazd nie istnieje.');
     }
+
+    return this.prisma.vehicle.update({
+      where: { id: vehicle.id },
+      data: { status: dto.status },
+    });
+  }
+
+  private assertCanManageVehicles(authUser: AuthUser): void {
+    if (authUser.organizationType !== OrganizationType.PROVIDER) {
+      throw new ForbiddenException(
+        'Tylko przewoźnik może zarządzać pojazdami.',
+      );
+    }
+
+    if (authUser.role !== MembershipRole.OWNER) {
+      throw new ForbiddenException(
+        'Tylko właściciel może zarządzać pojazdami.',
+      );
+    }
+  }
+
+  private normalizeLicensePlate(licensePlate: string): string {
+    return licensePlate.trim().replace(/\s+/g, '').toUpperCase();
   }
 }
