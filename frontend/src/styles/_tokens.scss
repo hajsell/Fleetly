@@ -1,0 +1,54 @@
+:root {
+  // Marka
+  --color-primary: #003152;
+  --color-primary-hover: #004673;
+  --color-primary-light: #eef8fc;
+  --color-secondary: #addff1;
+
+  // Powierzchnie
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+
+  // Tekst
+  --color-text: #1e293b;
+  --color-text-strong: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-on-primary: #ffffff;
+
+  // Obramowania
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  // Typografia
+  --font-family-base:
+    Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  // Odstępy
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  // Kształty
+  --radius-md: 0.5rem;
+
+  // Layout
+  --header-height: 4rem;
+  --content-max-width: 90rem;
+
+  // Animacje
+  --transition-fast: 150ms ease;
+}

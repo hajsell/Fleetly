@@ -1,0 +1,138 @@
+.header {
+  width: 100%;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-5);
+
+  width: 100%;
+  max-width: var(--content-max-width);
+  min-height: var(--header-height);
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-2);
+
+  color: var(--color-primary);
+
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.logoIcon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.link {
+  position: relative;
+
+  padding: var(--space-2) var(--space-3);
+
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+
+  &::after {
+    position: absolute;
+    right: var(--space-3);
+    bottom: 0;
+    left: var(--space-3);
+
+    height: 2px;
+
+    background-color: var(--color-primary);
+    content: "";
+    opacity: 0;
+    transform: scaleX(0);
+
+    transition:
+      opacity var(--transition-fast),
+      transform var(--transition-fast);
+  }
+
+  &:hover {
+    color: var(--color-primary);
+  }
+
+  &:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+
+  &::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.auth {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: var(--space-2);
+}
+
+.authButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
+
+  color: var(--color-primary);
+  background-color: transparent;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--color-primary-light);
+    border-color: var(--color-primary);
+  }
+}
+
+.registerButton {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+
+  &:hover {
+    color: var(--color-text-on-primary);
+    background-color: var(--color-primary);
+  }
+}

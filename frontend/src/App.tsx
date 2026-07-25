@@ -1,9 +1,24 @@
+import { Route, Routes } from 'react-router'
+import Navbar from './components/Navbar/Navbar'
+import HomePage from './pages/HomePage/HomePage'
+import LoginPage from './pages/LoginPage/LoginPage'
+import OrdersPage from './pages/OrdersPage/OrdersPage'
+import NotFoundPage from './pages/NotFoundPage/NotFoundPage'
+
 function App() {
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Fleetly Client</h1>
-      <p>Aplikacja frontendowa działa i czeka na połączenie z API.</p>
-    </div>
+    <>
+      <Navbar />
+
+      <main>
+        <Routes>
+          <Route path='/' element={<HomePage />} />
+          <Route path='/login' element={<LoginPage />} />
+          <Route path='/orders' element={<OrdersPage />} />
+          <Route path='*' element={<NotFoundPage />} />
+        </Routes>
+      </main>
+    </>
   )
 }
 
