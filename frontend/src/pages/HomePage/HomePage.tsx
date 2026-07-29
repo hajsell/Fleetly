@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router'
 import styles from './HomePage.module.scss'
 
