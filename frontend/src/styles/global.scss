@@ -1,5 +1,6 @@
 @use "./tokens";
 
+// Podstawowy reset
 *,
 *::before,
 *::after {
@@ -17,36 +18,96 @@ body {
   min-height: 100vh;
   margin: 0;
 
-  color: var(--color-text);
-  background-color: var(--color-background);
-
   font-size: var(--font-size-md);
-  line-height: 1.5;
+  line-height: var(--line-height-base);
+
+  background-color: var(--color-background);
+  color: var(--color-text);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100vh;
 }
 
+// Nagłówki
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--color-text-strong);
+  line-height: var(--line-height-heading);
+}
+
+h1 {
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+h2 {
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+h3 {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+p {
+  margin-bottom: var(--space-4);
+}
+
+// Linki
 a {
   color: inherit;
   text-decoration: none;
 }
 
+// Formularze i przyciski dziedziczą font aplikacji
 button,
 input,
-select,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+// Obrazy nie wychodzą poza kontener
 img,
 svg {
   display: block;
   max-width: 100%;
 }
 
+// Przyjazny focus dla klawiatury
 :focus-visible {
-  outline: 3px solid rgb(0 49 82 / 25%);
-  outline-offset: 3px;
+  outline: 3px solid rgb(37 99 235 / 35%);
+  outline-offset: 2px;
+}
+
+// Domyślne zaznaczenie tekstu
+::selection {
+  color: var(--color-text-on-primary);
+  background-color: var(--color-primary);
 }

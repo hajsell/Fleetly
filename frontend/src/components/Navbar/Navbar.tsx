@@ -1,4 +1,4 @@
-import { Link, NavLink } from 'react-router'
+import { Link } from 'react-router'
 import styles from './Navbar.module.scss'
 
 function Navbar() {
@@ -36,33 +36,17 @@ function Navbar() {
         </Link>
 
         <div className={styles.center}>
-          <NavLink
-            className={({ isActive }) =>
-              `${styles.link} ${isActive ? styles.active : ''}`
-            }
-            to="/"
-            end
-          >
-            Dashboard
-          </NavLink>
+          <a className={styles.link} href="/#about">
+            O platformie
+          </a>
 
-          <NavLink
-            className={({ isActive }) =>
-              `${styles.link} ${isActive ? styles.active : ''}`
-            }
-            to="/orders"
-          >
-            Zlecenia
-          </NavLink>
+          <a className={styles.link} href="/#how-it-works">
+            Jak to działa
+          </a>
 
-          <NavLink
-            className={({ isActive }) =>
-              `${styles.link} ${isActive ? styles.active : ''}`
-            }
-            to="/about"
-          >
-            O nas
-          </NavLink>
+          <a className={styles.link} href="/#for-providers">
+            Dla przewoźników
+          </a>
         </div>
 
         <div className={styles.auth}>

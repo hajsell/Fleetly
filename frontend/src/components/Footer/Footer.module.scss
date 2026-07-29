@@ -1,0 +1,140 @@
+.footer {
+  color: var(--color-text-on-primary);
+  background-color: var(--color-primary);
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(20rem, 1fr);
+  gap: var(--space-6);
+
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5);
+}
+
+.brand {
+  max-width: 28rem;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  margin-bottom: var(--space-4);
+
+  color: var(--color-text-on-primary);
+
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.logoIcon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.description {
+  margin: 0;
+
+  color: rgb(255 255 255 / 70%);
+  line-height: 1.6;
+}
+
+.navigation {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.columnTitle {
+  margin: 0 0 var(--space-2);
+
+  color: var(--color-text-on-primary);
+
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.link {
+  position: relative;
+
+  padding: var(--space-1) 0;
+
+  color: rgb(255 255 255 / 70%);
+  font-size: var(--font-size-sm);
+
+  transition: color var(--transition-fast);
+
+  &::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    height: 1px;
+
+    background-color: #93c5fd;
+    content: "";
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+
+    transition:
+      opacity var(--transition-fast),
+      transform var(--transition-fast);
+  }
+
+  &:hover {
+    color: var(--color-text-on-primary);
+  }
+
+  &:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.bottom {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-5);
+
+  border-top: 1px solid rgb(255 255 255 / 15%);
+}
+
+.copyright {
+  margin: 0;
+
+  color: rgb(255 255 255 / 60%);
+  font-size: var(--font-size-xs);
+}
+
+@media (max-width: 48rem) {
+  .content {
+    grid-template-columns: 1fr;
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-6);
+  }
+
+  .navigation {
+    gap: var(--space-5);
+  }
+}
+
+@media (max-width: 30rem) {
+  .navigation {
+    grid-template-columns: 1fr;
+  }
+}

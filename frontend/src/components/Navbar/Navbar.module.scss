@@ -83,16 +83,6 @@
   }
 }
 
-.active {
-  color: var(--color-primary);
-  font-weight: var(--font-weight-semibold);
-
-  &::after {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
 .auth {
   display: flex;
   align-items: center;
@@ -124,6 +114,27 @@
   &:hover {
     background-color: var(--color-primary-light);
     border-color: var(--color-primary);
+  }
+}
+
+@media (max-width: 64rem) {
+  .navbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .center {
+    display: none;
+  }
+}
+
+@media (max-width: 34rem) {
+  .navbar {
+    gap: var(--space-3);
+    padding: 0 var(--space-4);
+  }
+
+  .authButton:first-child {
+    display: none;
   }
 }
 
