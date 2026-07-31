@@ -1,10 +1,46 @@
-import { type FormEvent } from 'react'
+import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router'
+import { login } from '../../api/authApi'
+import { ApiError } from '../../api/apiClient'
+import type { LoginCredentials } from '../../types/auth.types'
 import styles from './LoginForm.module.scss'
 
 function LoginForm() {
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (isSubmitting) {
+      return
+    }
+
+    const formData = new FormData(event.currentTarget)
+    const credentials: LoginCredentials = {
+      email: String(formData.get('email')).trim(),
+      password: String(formData.get('password')),
+    }
+
+    setIsSubmitting(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      const response = await login(credentials)
+      const userName = response.user.firstName ?? response.user.email
+
+      setSuccessMessage(`Zalogowano pomyślnie. Witaj, ${userName}!`)
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof ApiError
+          ? caughtError.message
+          : 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie.',
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -23,6 +59,7 @@ function LoginForm() {
             type="email"
             autoComplete="email"
             placeholder="firma@example.com"
+            disabled={isSubmitting}
             required
           />
         </div>
@@ -35,13 +72,35 @@ function LoginForm() {
             type="password"
             autoComplete="current-password"
             placeholder="Wprowadź hasło"
+            disabled={isSubmitting}
             required
           />
         </div>
       </div>
 
-      <button className={styles.submitButton} type="submit">
-        Zaloguj się
+      {error && (
+        <p className={`${styles.message} ${styles.error}`} role="alert">
+          {error}
+        </p>
+      )}
+
+      {successMessage && (
+        <p
+          className={`${styles.message} ${styles.success}`}
+          role="status"
+          aria-live="polite"
+        >
+          {successMessage}
+        </p>
+      )}
+
+      <button
+        className={styles.submitButton}
+        type="submit"
+        disabled={isSubmitting}
+        aria-busy={isSubmitting}
+      >
+        {isSubmitting ? 'Logowanie...' : 'Zaloguj się'}
       </button>
 
       <p className={styles.registerPrompt}>

@@ -85,10 +85,37 @@
     background-color var(--transition-fast),
     border-color var(--transition-fast);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--color-primary-hover);
     border-color: var(--color-primary-hover);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+}
+
+.message {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+
+  border: 1px solid;
+  border-radius: var(--radius-md);
+
+  font-size: var(--font-size-sm);
+}
+
+.error {
+  color: var(--color-danger);
+  background-color: var(--color-danger-light);
+  border-color: color-mix(in srgb, var(--color-danger-hover) 25%, transparent);
+}
+
+.success {
+  color: var(--color-success);
+  background-color: var(--color-success-light);
+  border-color: rgb(22 163 74 / 25%);
 }
 
 .loginPrompt {
